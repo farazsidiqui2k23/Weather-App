@@ -30,7 +30,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +48,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.weatherapp.ApiSetup.NetworkResponse
+import com.example.weatherapp.ApiSetup.weatherViewModel
 import com.example.weatherapp.R
 import com.example.weatherapp.ui.theme.WeatherAppTheme
 import com.example.weatherapp.ui.theme.dark_purple
@@ -55,9 +60,18 @@ import com.example.weatherapp.ui.theme.purple
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home_Screen(modifier: Modifier) {
-    val brush = Brush.linearGradient(listOf(purple, ghostWhite, purple))
+    val brush = Brush.linearGradient(listOf(dark_purple, ghostWhite, purple))
     var city by remember { mutableStateOf("") }
+    var search by remember { mutableStateOf(false) }
 
+//use another composable
+    val viewModel = viewModel<weatherViewModel>()
+    if (search) {
+        LaunchedEffect(Unit) {
+            viewModel.getWeatherData(city)
+            search = false
+        }
+    }
     Box(
         modifier
             .fillMaxSize()
@@ -70,8 +84,7 @@ fun Home_Screen(modifier: Modifier) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.8f)
-                ,
+                    .fillMaxHeight(0.8f),
                 shape = RoundedCornerShape(0.dp, 0.dp, 18.dp, 18.dp),
                 colors = CardDefaults.cardColors(ghostWhite.copy(alpha = .3f))
             ) {
@@ -95,7 +108,10 @@ fun Home_Screen(modifier: Modifier) {
                         ),
                         singleLine = true,
                         trailingIcon = @Composable {
-                            IconButton(onClick = {}) {
+                            IconButton(onClick = {
+                                search = true
+
+                            }) {
                                 Icon(
                                     Icons.Default.Search,
                                     contentDescription = "search icon for city", tint = dark_purple
@@ -104,64 +120,40 @@ fun Home_Screen(modifier: Modifier) {
                         }
                     )
 
-                    Row(Modifier.padding(0.dp,24.dp,0.dp,0.dp)) {
-                        Icon(Icons.Default.LocationOn, contentDescription = "current loc", tint = dark_purple)
-                        Spacer(Modifier.width(16.dp))
-                        Text(text = "Karachi,PK")
+
+                    val weatherResult = viewModel.weatherResult.observeAsState()
+
+
+
+                    when (val result = weatherResult.value) {
+
+                        is NetworkResponse.Error -> {
+                            println("Erorr${result.message}")
+                        }
+
+                        NetworkResponse.Loading -> {
+                            println("Loading")
+                        }
+
+                        is NetworkResponse.Success -> {
+                            main_scr()
+                            println("Data ${result.data.current}")
+                        }
+
+                        null -> {
+                            println("Still null")
+                        }
                     }
-
-                    Row(modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 0.dp).fillMaxHeight(.3f)) {
-                        Text(
-                            "22",
-                            fontSize = 150.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                            color = Color(0xFF4B4EE5)
-                        )
-                        Text(
-                            "\u00B0",
-                            fontSize = 100.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                            color = Color(0xFF4B4EE5)
-                        )
-
-                    }
-                    Row() {
-                        Text(
-                            "Cloudy",
-                            fontSize = 26.sp,
-                            fontFamily = FontFamily(Font(R.font.poppins_semi_bold)),
-//                            modifier = Modifier.offset(x = 0.dp, y = -50.dp) ,
-                            color = Color(0xFF4B4EE5)
-                        )
-                        Image(
-                            painter = painterResource(id = R.drawable.sunny),
-                            contentDescription = "Weather Image",
-                            modifier = Modifier
-                                .offset(x = 50.dp, y = -40.dp)
-                                .size(100.dp)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-//                            .offset(y = -50.dp)
-//                            .weight(1f)
-                        , contentAlignment = Alignment.BottomCenter
-
-                    ) {
-                        weatherProperties()
-                    }
-
+//here end
                 }
             }
 
             Row(Modifier.padding(10.dp)) {
 
-            day_forecast()
-            day_forecast()
-            day_forecast()
-            day_forecast()
+                day_forecast()
+                day_forecast()
+                day_forecast()
+                day_forecast()
 
             }
 
@@ -173,6 +165,65 @@ fun Home_Screen(modifier: Modifier) {
 
 }
 
+
+@Composable
+fun main_scr() {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.padding(0.dp, 24.dp, 0.dp, 0.dp)) {
+            Icon(Icons.Default.LocationOn, contentDescription = "current loc", tint = dark_purple)
+            Spacer(Modifier.width(16.dp))
+            Text(text = "Karachi,PK")
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(0.dp, 0.dp, 0.dp, 0.dp)
+                .fillMaxHeight(.3f)
+        ) {
+            Text(
+                "22",
+                fontSize = 150.sp,
+                fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                color = Color(0xFF4B4EE5)
+            )
+            Text(
+                "\u00B0",
+                fontSize = 100.sp,
+                fontFamily = FontFamily(Font(R.font.poppins_bold)),
+                color = Color(0xFF4B4EE5)
+            )
+
+        }
+        Row() {
+            Text(
+                "Cloudy",
+                fontSize = 26.sp,
+                fontFamily = FontFamily(Font(R.font.poppins_semi_bold)),
+//                            modifier = Modifier.offset(x = 0.dp, y = -50.dp) ,
+                color = Color(0xFF4B4EE5)
+            )
+            Image(
+                painter = painterResource(id = R.drawable.sunny),
+                contentDescription = "Weather Image",
+                modifier = Modifier
+                    .offset(x = 50.dp, y = -40.dp)
+                    .size(100.dp)
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+//                            .offset(y = -50.dp)
+//                            .weight(1f)
+            , contentAlignment = Alignment.BottomCenter
+
+        ) {
+            weatherProperties()
+        }
+    }
+
+}
 
 @Composable
 fun weatherProperties() {
@@ -279,7 +330,10 @@ fun MoreProperty(icon: Int, value: String, label: String) {
 fun day_forecast(modifier: Modifier = Modifier) {
 
 
-    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(ghostWhite.copy(alpha = .6f))) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(ghostWhite.copy(alpha = .6f))
+    ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(16.dp)

@@ -1,6 +1,7 @@
 package com.example.weatherapp.ApiSetup
 
 import android.util.Log
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -16,10 +17,12 @@ class weatherViewModel : ViewModel() {
     val weatherResult: LiveData<NetworkResponse<weatherDataClass>> = _weatherResult
 
     fun getWeatherData(city: String) {
-        _weatherResult.value = NetworkResponse.Loading
+
         viewModelScope.launch {
 
-            val response = weatherApi.getWeather(
+            _weatherResult.value = NetworkResponse.Loading
+
+            try { val response = weatherApi.getWeather(
                 apiKey = Api_keys.apiKey,
                 city = city,
                 day = 7,
@@ -27,8 +30,9 @@ class weatherViewModel : ViewModel() {
                 alerts = "no"
             )
 
-            try {
+
                 if (response.isSuccessful) {
+
                     response.body()?.let {
                         _weatherResult.value = NetworkResponse.Success(it)
                     }
@@ -43,6 +47,7 @@ class weatherViewModel : ViewModel() {
                 )
             }
         }
+
 
 
     }
