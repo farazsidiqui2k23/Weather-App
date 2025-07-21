@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
 }
 
 android {
@@ -60,21 +61,24 @@ dependencies {
 
 
     //retrofit
-    implementation ("com.google.code.gson:gson:2.9.1")
-    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation (libs.gson)
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
 
     //icon
-//    implementation (libs.androidx.material.icons.extended)
+     implementation(libs.androidx.material)
 
     //lifecycle
     implementation (libs.androidx.lifecycle.viewmodel.compose)
 
-
     //Runtime library for observing data
-    implementation("androidx.compose.runtime:runtime-livedata:1.8.3")
-
+    implementation(libs.androidx.runtime.livedata)
 
     //Location Services
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation(libs.play.services.location)
+
+    val nav_version = "2.9.2"
+
+    // Jetpack Compose integration
+    implementation ("androidx.navigation:navigation-compose:2.9.2")
 }
