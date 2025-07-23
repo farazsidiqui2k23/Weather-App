@@ -154,7 +154,9 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                androidx.compose.material3.CircularProgressIndicator(
+                                    color = dark_purple
+                                )
                             }
                         }
 

@@ -26,6 +26,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -125,13 +126,17 @@ fun CurrentCity(context: Context, isNavAllow: (bool: Boolean, city: String) -> U
     when (LocationResult) {
         is CurrentLocationResponse.loading -> {
 
-//            Toast.makeText(
-//                context,
-//                "Please turn on Location & stable your internet connection",
-//                Toast.LENGTH_SHORT
-//            ).show()
+            LaunchedEffect(Unit){
+                Toast.makeText(
+                    context,
+                    "Please turn on Location & stable your internet connection",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
 
-            CircularProgressIndicator()
+            CircularProgressIndicator(
+                color = dark_purple
+            )
         }
 
         is CurrentLocationResponse.OnSucess -> {
