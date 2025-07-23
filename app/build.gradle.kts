@@ -77,8 +77,11 @@ dependencies {
     //Location Services
     implementation(libs.play.services.location)
 
-    val nav_version = "2.9.2"
+    // Jetpack Compose navigation integration
+    implementation (libs.androidx.navigation.compose)
 
-    // Jetpack Compose integration
-    implementation ("androidx.navigation:navigation-compose:2.9.2")
+    //accompanist integration
+    implementation(libs.accompanist.systemuicontroller)
+
+
 }
