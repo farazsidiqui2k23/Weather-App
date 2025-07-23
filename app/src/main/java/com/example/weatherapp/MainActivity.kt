@@ -37,8 +37,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             WeatherAppTheme {
-
-
                 Scaffold { padding ->
                     WeatherApp(this, Modifier.padding(padding))
                 }
