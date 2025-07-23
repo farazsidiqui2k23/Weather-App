@@ -75,6 +75,7 @@ import org.jetbrains.annotations.Async
 import java.util.Calendar
 import java.util.Date
 
+lateinit var current_hour: String
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +85,7 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
     var search by remember { mutableStateOf(search) }
 
     var forecast: Forecast? by remember { mutableStateOf(null) }
+    current_hour = "0"
 
 //use another composable
     val viewModel = viewModel<weatherViewModel>()
@@ -98,8 +100,6 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
             .fillMaxSize()
             .background(brush = brush)
     ) {
-
-
         Column(modifier = Modifier.fillMaxSize()) {
 
             Card(
@@ -109,14 +109,12 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
                 shape = RoundedCornerShape(0.dp, 0.dp, 18.dp, 18.dp),
                 colors = CardDefaults.cardColors(ghostWhite.copy(alpha = .3f))
             ) {
-
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp, 10.dp, 16.dp, 0.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-
                     TextField(
                         value = city,
                         onValueChange = { city = it },
@@ -125,7 +123,10 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
                         colors = TextFieldDefaults.colors(
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedContainerColor = ghostWhite
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = ghostWhite,
+                            focusedTextColor = dark_purple,
+                            unfocusedTextColor = purple
                         ),
                         singleLine = true,
                         trailingIcon = @Composable {
@@ -140,7 +141,6 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
                         }
                     )
 
-
                     val weatherResult = viewModel.weatherResult.observeAsState()
                     when (val result = weatherResult.value) {
 
@@ -149,17 +149,13 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
                             Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
                         }
 
-
                         NetworkResponse.Loading -> {
-
-
                             Box(
                                 modifier = Modifier.fillMaxSize(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator()
                             }
-
                         }
 
                         is NetworkResponse.Success -> {
@@ -167,325 +163,31 @@ fun HomeScreen(modifier: Modifier, context: Context, city: String, search: Boole
                                 currentLocation = result.data.location,
                                 currentWeather = result.data.current
                             )
-
                             forecast = result.data.forecast
-
+                            val localtime = result.data.location.localtime.split(" ")
+                            current_hour = localtime[1].split(":")[0]
 
                         }
 
                         null -> {
                             println("Still null")
                         }
-
-                        //here end
                     }
                 }
             }
 
             forecast?.let {
-                forecast_display(modifier, it)
+                forecast_display(modifier, it, current_hour.toInt())
             }
 
-
-        }
-    }
-
-
-}
-
-
-@Composable
-fun forecast_display(modifier: Modifier, forecast: Forecast) {
-
-    val weekDays = mutableListOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-    var i by rememberSaveable { mutableIntStateOf(0) }
-    LazyRow(modifier = Modifier.padding(12.dp)) {
-        items(weekDays) { day ->
-
-            if (i > 2) {
-                i %= 3
-            }
-
-            var dateEpoch = forecast.forecastday[i].date_epoch
-
-            var date = Date(dateEpoch.toLong() * 1000)
-
-            var forecast_day = date.toString().substring(0..2)
-
-            if (forecast_day == day) {
-
-                day_forecast(
-                    modifier = modifier,
-                    index = i,
-                    day = forecast_day,
-                    celcius = req_str(forecast.forecastday[i].hour[0].temp_c),
-                    farhen = req_str(forecast.forecastday[i].hour[0].temp_f)
-                )
-                Spacer(Modifier.width(6.dp))
-                i += 1
-            } else {
-
-                day_forecast(
-                    modifier = modifier,
-                    index = 8,
-                    day = day,
-                    celcius = "32",
-                    farhen = "21"
-                )
-                Spacer(Modifier.width(6.dp))
-            }
-
-
-        }
-
-    }
-}
-
-
-@Composable
-fun main_scr(currentLocation: Location, currentWeather: Current) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(Modifier.padding(0.dp, 24.dp, 0.dp, 0.dp)) {
-            Icon(Icons.Default.LocationOn, contentDescription = "current loc", tint = dark_purple)
-            Spacer(Modifier.width(16.dp))
-
-            Text(text = currentLocation.name)
-        }
-
-        Row(
-            modifier = Modifier
-                .padding(0.dp, 0.dp, 0.dp, 0.dp)
-                .fillMaxHeight(.3f)
-        ) {
-            Text(
-                req_str(currentWeather.temp_c),
-                fontSize = 130.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                color = Color(0xFF4B4EE5)
-            )
-
-            Text(
-                "\u00B0",
-                fontSize = 100.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_bold)),
-                color = Color(0xFF4B4EE5)
-            )
-
-        }
-        Row() {
-            Text(
-                currentWeather.condition.text,
-                fontSize = 26.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_semi_bold)),
-//                            modifier = Modifier.offset(x = 0.dp, y = -50.dp) ,
-                color = Color(0xFF4B4EE5)
-            )
-            Image(
-                painter = painterResource(id= weatherIcon(currentWeather.condition.code.toInt())),
-                contentDescription = "Weather Image",
-                modifier = Modifier
-                    .offset(x = 25.dp, y = -20.dp)
-                    .size(100.dp)
-            )
-        }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-//                            .offset(y = -50.dp)
-//                            .weight(1f)
-            , contentAlignment = Alignment.BottomCenter
-
-        ) {
-            weatherProperties(currentWeather)
-        }
-    }
-
-}
-
-fun weatherIcon(code : Int) : Int{
-        var image = when(code) {
-            1000 -> R.drawable.sunny
-            1003 -> R.drawable.partly_cloudy
-            1006, 1009 -> R.drawable.cloudy
-            1063, 1180-1186 -> R.drawable.rainy
-
-
-
-            else -> { R.drawable.partly_cloudy}
-        }
-
-    return image
-
-}
-@Composable
-fun weatherProperties(currentWeather: Current) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(40.dp),
-        colors = CardDefaults.cardColors(
-            ghostWhite
-        ),
-        elevation = CardDefaults.cardElevation(2.dp)
-    ) {
-
-        Column(Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-
-                MoreProperty(
-                    icon = R.drawable.feels_like,
-                    value = req_str(currentWeather.feelslike_c) + "\u00B0",
-                    label = "Feels like"
-                )
-
-                MoreProperty(
-                    icon = R.drawable.humidity,
-                    value = req_str(currentWeather.humidity),
-                    label = "Humidity"
-                )
-                MoreProperty(
-                    icon = R.drawable.wind,
-                    value = req_str(currentWeather.wind_kph) + "km/h",
-                    label = "Wind speed"
-                )
-
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-
-                MoreProperty(
-                    icon = R.drawable.visibility,
-                    value = req_str(currentWeather.vis_km),
-                    label = "Visibility"
-                )
-
-                MoreProperty(
-                    icon = R.drawable.pressure,
-                    value = req_str(currentWeather.precip_in),
-                    label = "Pressure"
-                )
-                MoreProperty(
-                    icon = R.drawable.maxtemp,
-                    value = "32",
-                    label = "Max temp"
-                )
-
-            }
         }
     }
 }
 
 
-@Composable
-fun MoreProperty(icon: Int, value: String, label: String) {
-
-    Box {
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Image(
-                painter = painterResource(id = icon),
-                contentDescription = "Feels like",
-                colorFilter = ColorFilter.tint(dark_purple),
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(Modifier.height(5.dp))
-            Text(
-                text = value,
-                color = dark_purple,
-                fontSize = 14.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
-            )
-
-            Text(
-                text = label,
-                color = dark_purple,
-                fontSize = 12.sp,
-                fontFamily = FontFamily(Font(R.font.poppins_regular))
-            )
-
-        }
-    }
 
 
-}
-
-@Composable
-fun day_forecast(modifier: Modifier = Modifier, index : Int,day: String, celcius: String, farhen: String) {
 
 
-    Card(
-        modifier = Modifier.width(70.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(if(index == 0) dark_purple else ghostWhite.copy(alpha = .6f)),
 
-        ) {
 
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center){
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Text(
-                    text = day,
-                    color = if (index == 0) Color.White else dark_purple,
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_semi_bold))
-                )
-                Spacer(Modifier.height(4.dp))
-
-                Image(
-                    painter = painterResource(id = R.drawable.sunny),
-                    contentDescription = "Feels like",
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(Modifier.height(3.dp))
-                Text(
-                    text = "${celcius}\u00B0",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_regular))
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "${farhen}F",
-                    color = if (index == 0) ghostWhite else dark_purple,
-                    fontSize = 14.sp,
-                    fontFamily = FontFamily(Font(R.font.poppins_regular))
-                )
-
-            }
-        }
-    }
-}
-
-fun req_str(celcius: String): String {
-    return celcius.split(".")[0]
-}
-
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun GreetingPreview() {
-//    WeatherAppTheme {
-//        Home_Screen(modifier = Modifier)
-//
-////        weatherProperties()
-//    }
-//}
-
-@Preview
-@Composable
-private fun ui() {
-//    MoreProperty()
-//    weatherProperties()
-//    day_forecast()
-}
